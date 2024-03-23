@@ -224,6 +224,7 @@ int main() {
 		}
 		else
 		{
+			printf("could not find path: %s \n", header.request.path);
 			if (send(client_fd, REQUEST_404, strlen(REQUEST_404), 0) == -1)
 			{
 				printf(MSG_SEND_FAILED, strerror(errno));
