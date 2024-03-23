@@ -89,6 +89,8 @@ int main() {
 			echo = strchr(echo, '/');
 			if (echo == NULL)
 				echo = "";
+			else
+				echo++;
 			int echo_len = strlen(echo);
 			char *reponse = (char*)malloc(128 + echo_len);
 			sprintf(reponse, 
