@@ -78,15 +78,32 @@ int main() {
 		if (strcmp(token, "/") == 0)
 		{
 			char reponse[] = "HTTP/1.1 200 OK\r\n\r\n";
-			if (send(client_fd, reponse, sizeof(reponse), 0) == -1)
+			if (send(client_fd, reponse, strlen(reponse), 0) == -1)
 			{
 				printf("Send reponse failed: %s \n", strerror(errno));
 			}
 		}
+		else if (strncmp(token, "/echo", 5) == 0)
+		{
+			char* echo = strtok(token, "/");
+			echo = strtok(NULL, "/");
+			if (echo == NULL)
+				echo = "";
+			int echo_len = strlen(echo);
+			char *reponse = (char*)malloc(128 + echo_len);
+			sprintf(reponse, 
+			"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s",
+			echo_len, echo);
+			if (send(client_fd, reponse, strlen(reponse), 0) == -1)
+			{
+				printf("Send reponse failed: %s \n", strerror(errno));
+			}
+			free(reponse);
+		}
 		else
 		{
 			char reponse[] = "HTTP/1.1 404 Not Found\r\n\r\n";
-			if (send(client_fd, reponse, sizeof(reponse), 0) == -1)
+			if (send(client_fd, reponse, strlen(reponse), 0) == -1)
 			{
 				printf("Send reponse failed: %s \n", strerror(errno));
 			}
