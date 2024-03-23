@@ -232,20 +232,17 @@ int main() {
 					}
 					free(reponse);
 				}
-				else if (strncmp(header.request.path, "/file", 5) == 0)
+				else if (strncmp(header.request.path, "/files", 5) == 0)
 				{
 					char* file = header.request.path + 1;
 					file = strchr(file, '/');
 					if (file == NULL)
 					{
-						if (send(client_fd, REQUEST_404, strlen(REQUEST_404), 0) == -1)
-						{
-							printf(MSG_SEND_FAILED, strerror(errno));
-						}
+						printf("Error file path\n");
+						goto SEND_404;
 					}
 					else
 					{
-						file++;
 						FILE *f = fopen(file, "rb");
 						if (f != NULL)
 						{
@@ -272,10 +269,8 @@ int main() {
 						}
 						else
 						{
-							if (send(client_fd, REQUEST_404, strlen(REQUEST_404), 0) == -1)
-							{
-								printf(MSG_SEND_FAILED, strerror(errno));
-							}
+							printf("Open file error\n");
+							goto SEND_404;
 						}
 						
 					}
@@ -283,6 +278,7 @@ int main() {
 				else
 				{
 					printf("could not find path: %s \n", header.request.path);
+					SEND_404:
 					if (send(client_fd, REQUEST_404, strlen(REQUEST_404), 0) == -1)
 					{
 						printf(MSG_SEND_FAILED, strerror(errno));
@@ -298,6 +294,7 @@ int main() {
 			free(header.host.url);
 			free(header.host.port);
 			free(header.user_agent.agent);
+			
 			close(client_fd);
 
 			exit(0);
