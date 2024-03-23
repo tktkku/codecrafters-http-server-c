@@ -232,6 +232,54 @@ int main() {
 					}
 					free(reponse);
 				}
+				else if (strncmp(header.request.path, "/file", 5) == 0)
+				{
+					char* file = header.request.path + 1;
+					file = strchr(file, '/');
+					if (file == NULL)
+					{
+						if (send(client_fd, REQUEST_404, strlen(REQUEST_404), 0) == -1)
+						{
+							printf(MSG_SEND_FAILED, strerror(errno));
+						}
+					}
+					else
+					{
+						file++;
+						FILE *f = fopen(file, "rb");
+						if (f != NULL)
+						{
+							fseek(f, 0L, SEEK_END);
+							int file_size = ftell(f);
+							fseek(f, 0L, SEEK_SET);
+							unsigned char *file_buffer = (unsigned char*)malloc(file_size);
+							fread(file_buffer, file_size, 1, f); 
+							fclose(f);
+
+							int off = 0;
+							char *reponse = (char*)malloc(128 + file_size);
+							sprintf(reponse, 
+							"HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: %d\r\n\r\n",
+							file_size);
+							off = strlen(reponse);
+							memcpy(reponse + off, file_buffer, file_size);
+							if (send(client_fd, reponse, strlen(reponse), 0) == -1)
+							{
+								printf(MSG_SEND_FAILED, strerror(errno));
+							}
+							free(reponse);
+							free(file_buffer);
+						}
+						else
+						{
+							if (send(client_fd, REQUEST_404, strlen(REQUEST_404), 0) == -1)
+							{
+								printf(MSG_SEND_FAILED, strerror(errno));
+							}
+						}
+						
+					}
+				}
 				else
 				{
 					printf("could not find path: %s \n", header.request.path);
