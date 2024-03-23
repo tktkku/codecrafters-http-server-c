@@ -269,7 +269,7 @@ int main() {
 						}
 						else
 						{
-							printf("Open file error\n");
+							printf("Open file:%s error\n", file);
 							goto SEND_404;
 						}
 						
@@ -294,7 +294,7 @@ int main() {
 			free(header.host.url);
 			free(header.host.port);
 			free(header.user_agent.agent);
-			
+
 			close(client_fd);
 
 			exit(0);
