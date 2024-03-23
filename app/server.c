@@ -119,9 +119,11 @@ int main() {
 			char* p3 = strchr(p2 + 1, '\r');
 
 			header.request.path = (char*)malloc(p2 - p1);
+			memset(header.request.path, 0, p2 - p1);
 			strncpy(header.request.path, p1 + 1, p2 - p1 - 1);
 
 			header.request.version = (char*)malloc(p3 - p2);
+			memset(header.request.version, 0, p3 - p2);
 			strncpy(header.request.version, p2 + 1, p3 - p2 - 1);
 
 			free(t_copy);
@@ -139,9 +141,11 @@ int main() {
 			char* p3 = strchr(p2 + 1, '\r');
 			
 			header.request.path = (char*)malloc(p2 - p1);
+			memset(header.request.path, 0, p2 - p1);
 			strncpy(header.request.path, p1 + 1, p2 - p1 - 1);
 
 			header.request.version = (char*)malloc(p3 - p2);
+			memset(header.request.version, 0, p3 - p2);
 			strncpy(header.request.version, p2 + 1, p3 - p2 - 1);
 
 			free(t_copy);
@@ -157,9 +161,11 @@ int main() {
 			char* p3 = strchr(p2 + 1, '\r');
 
 			header.host.url = (char*)malloc(p2 - p1);
+			memset(header.host.url, 0, p2 - p1);
 			strncpy(header.host.url, p1 + 1, p2 - p1 - 1);
 
 			header.host.port = (char*)malloc(p3 - p2);
+			memset(header.host.port, 0, p3 - p2);
 			strncpy(header.host.port, p2 + 1, p3 - p2 - 1);
 
 			free(t_copy);
@@ -174,6 +180,7 @@ int main() {
 			char* p2 = strchr(p1 + 1, '\r');
 
 			header.user_agent.agent = (char*)malloc(p2 - p1);
+			memset(header.user_agent.agent, 0, p2 - p1);
 			strncpy(header.user_agent.agent, p1 + 1, p2 - p1 - 1);
 			
 			free(t_copy);
