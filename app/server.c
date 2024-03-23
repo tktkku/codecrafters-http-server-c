@@ -85,8 +85,8 @@ int main() {
 		}
 		else if (strncmp(token, "/echo", 5) == 0)
 		{
-			char* echo = strtok(token, "/");
-			echo = strtok(NULL, "/");
+			char* echo = token + 1;
+			echo = strchr(echo, '/');
 			if (echo == NULL)
 				echo = "";
 			int echo_len = strlen(echo);
