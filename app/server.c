@@ -7,6 +7,36 @@
 #include <errno.h>
 #include <unistd.h>
 
+const char REQUEST_200[] = "HTTP/1.1 200 OK\r\n\r\n";
+const char REQUEST_404[] = "HTTP/1.1 404 Not Found\r\n\r\n";
+
+const char MSG_SEND_FAILED[] = "Failed to send: %s\n";
+typedef enum 
+{
+	GET,
+	POST
+} request_type;
+
+typedef struct 
+{
+	struct
+	{
+		request_type type;
+		char *path;
+		char *version;
+	} request;
+	struct 
+	{
+		char* url;
+		char* port;
+	} host;
+	struct 
+	{
+		char* agent;
+	} user_agent;
+} request_header;
+
+
 int main() {
 	// Disable output buffering
 	setbuf(stdout, NULL);
@@ -70,22 +100,99 @@ int main() {
 		return -1;
 	}
 	printf("received data=\n=====\n%s\n=====\n", recv_buffer);
-	char* token = strtok(recv_buffer, " ");
-	token = strtok(NULL, " ");
-	if (token != NULL)
+	char* token = strtok(recv_buffer, "\n");
+	// parse header
+	request_header header;
+	while (token != NULL)
 	{
 		printf("token=%s\n", token);
-		if (strcmp(token, "/") == 0)
+		if (strncmp(token, "GET", 3) == 0)
 		{
-			char reponse[] = "HTTP/1.1 200 OK\r\n\r\n";
-			if (send(client_fd, reponse, strlen(reponse), 0) == -1)
+			int t_len = strlen(token);
+			char* t_copy = (char*)malloc(t_len + 1);
+			strcpy(t_copy, token);
+
+			header.request.type = GET;
+			
+			char* p1 = strchr(t_copy, ' ');
+			char* p2 = strchr(p1 + 1, ' ');
+			char* p3 = strchr(p2 + 1, '\r');
+
+			header.request.path = (char*)malloc(p2 - p1);
+			strncpy(header.request.path, p1 + 1, p2 - p1 - 1);
+
+			header.request.version = (char*)malloc(p3 - p2);
+			strncpy(header.request.version, p2 + 1, p3 - p2 - 1);
+
+			free(t_copy);
+		}
+		else if (strncmp(token, "POST", 4) == 0)
+		{
+			int t_len = strlen(token);
+			char* t_copy = (char*)malloc(t_len + 1);
+			strcpy(t_copy, token);
+
+			header.request.type = POST;
+			
+			char* p1 = strchr(t_copy, ' ');
+			char* p2 = strchr(p1 + 1, ' ');
+			char* p3 = strchr(p2 + 1, '\r');
+			
+			header.request.path = (char*)malloc(p2 - p1);
+			strncpy(header.request.path, p1 + 1, p2 - p1 - 1);
+
+			header.request.version = (char*)malloc(p3 - p2);
+			strncpy(header.request.version, p2 + 1, p3 - p2 - 1);
+
+			free(t_copy);
+		}
+		else if (strncmp(token, "Host:", 5) == 0)
+		{
+			int t_len = strlen(token);
+			char* t_copy = (char*)malloc(t_len + 1);
+			strcpy(t_copy, token);
+
+			char* p1 = strchr(t_copy, ' ');
+			char* p2 = strchr(p1 + 1, ':');
+			char* p3 = strchr(p2 + 1, '\r');
+
+			header.host.url = (char*)malloc(p2 - p1);
+			strncpy(header.host.url, p1 + 1, p2 - p1 - 1);
+
+			header.host.port = (char*)malloc(p3 - p2);
+			strncpy(header.host.port, p2 + 1, p3 - p2 - 1);
+
+			free(t_copy);
+		}
+		else if (strncmp(token, "User-Agent:", 11) == 0)
+		{
+			int t_len = strlen(token);
+			char* t_copy = (char*)malloc(t_len + 1);
+			strcpy(t_copy, token);
+
+			char* p1 = strchr(t_copy, ' ');
+			char* p2 = strchr(p1 + 1, '\r');
+
+			header.user_agent.agent = (char*)malloc(p2 - p1);
+			strncpy(header.user_agent.agent, p1 + 1, p2 - p1 - 1);
+			
+			free(t_copy);
+		}
+		token = strtok(NULL, "\n");
+	}
+
+	if (header.request.type == GET)
+	{
+		if (strcmp(header.request.path, "/") == 0)
+		{
+			if (send(client_fd, REQUEST_200, strlen(REQUEST_200), 0) == -1)
 			{
-				printf("Send reponse failed: %s \n", strerror(errno));
+				printf(MSG_SEND_FAILED, strerror(errno));
 			}
 		}
-		else if (strncmp(token, "/echo", 5) == 0)
+		else if (strncmp(header.request.path, "/echo", 5) == 0)
 		{
-			char* echo = token + 1;
+			char* echo = header.request.path + 1;
 			echo = strchr(echo, '/');
 			if (echo == NULL)
 				echo = "";
@@ -98,21 +205,41 @@ int main() {
 			echo_len, echo);
 			if (send(client_fd, reponse, strlen(reponse), 0) == -1)
 			{
-				printf("Send reponse failed: %s \n", strerror(errno));
+				printf(MSG_SEND_FAILED, strerror(errno));
+			}
+			free(reponse);
+		}
+		else if (strcmp(header.request.path, "/user-agent") == 0)
+		{
+			int agent_len = strlen(header.user_agent.agent);
+			char* reponse = (char*)malloc(128 + agent_len);
+			sprintf(reponse, 
+			"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s",
+			agent_len, header.user_agent.agent);
+			if (send(client_fd, reponse, strlen(reponse), 0) == -1)
+			{
+				printf(MSG_SEND_FAILED, strerror(errno));
 			}
 			free(reponse);
 		}
 		else
 		{
-			char reponse[] = "HTTP/1.1 404 Not Found\r\n\r\n";
-			if (send(client_fd, reponse, strlen(reponse), 0) == -1)
+			if (send(client_fd, REQUEST_404, strlen(REQUEST_404), 0) == -1)
 			{
-				printf("Send reponse failed: %s \n", strerror(errno));
+				printf(MSG_SEND_FAILED, strerror(errno));
 			}
 		}
-		
 	}
-	
+	else if (header.request.type == POST)
+	{
+
+	}
+	free(header.request.path);
+	free(header.request.version);
+	free(header.host.url);
+	free(header.host.port);
+	free(header.user_agent.agent);
+
 	 close(server_fd);
 
 	return 0;
