@@ -60,11 +60,40 @@ int main() {
 		return 1;
 	}
 	 printf("Client connected\n");
-	 char reponse[] = "HTTP/1.1 200 OK\r\n\r\n";
-	 if (send(client_fd, reponse, sizeof(reponse), 0) == -1)
-	 {
-		printf("Send reponse failed: %s \n", strerror(errno));
-	 }
+
+	int buffer_size = 2048;
+	char recv_buffer[buffer_size];
+	int recved_size = recv(client_fd, recv_buffer, buffer_size, 0);
+	if (recved_size == -1)
+	{
+		printf("Read error: %s \n", strerror(errno));
+		return -1;
+	}
+	printf("received data=\n=====\n%s\n=====\n", recv_buffer);
+	char* token = strtok(recv_buffer, " ");
+	token = strtok(NULL, " ");
+	if (token != NULL)
+	{
+		printf("token=%s\n", token);
+		if (strcmp(token, "/") == 0)
+		{
+			char reponse[] = "HTTP/1.1 200 OK\r\n\r\n";
+			if (send(client_fd, reponse, sizeof(reponse), 0) == -1)
+			{
+				printf("Send reponse failed: %s \n", strerror(errno));
+			}
+		}
+		else
+		{
+			char reponse[] = "HTTP/1.1 404 Not Found\r\n\r\n";
+			if (send(client_fd, reponse, sizeof(reponse), 0) == -1)
+			{
+				printf("Send reponse failed: %s \n", strerror(errno));
+			}
+		}
+		
+	}
+	
 	 close(server_fd);
 
 	return 0;
