@@ -297,6 +297,7 @@ int main(int argc, char* argv[]) {
 				else
 				{
 					printf("could not find path: %s \n", header.request.path);
+					printf("client fd = %d\n", client_fd);
 					if (send(client_fd, REQUEST_404, strlen(REQUEST_404), 0) == -1)
 					{
 						printf(MSG_SEND_FAILED, strerror(errno));
@@ -307,18 +308,22 @@ int main(int argc, char* argv[]) {
 			{
 
 			}
+			printf("Free buffer\n");
 			free(header.request.path);
 			free(header.request.version);
 			free(header.host.url);
 			free(header.host.port);
 			free(header.user_agent.agent);
+			printf("Close client %d\n", client_fd);
+
+			shutdown(client_fd, SHUT_RDWR);
+			close(client_fd);
+			exit(0);
 		}		
 		else if (pid == -1)
 		{
 			printf("fork() error: %s\n", strerror(errno));
 		}
-		close(client_fd);
-		exit(0);
 	}
 	close(server_fd);
 	return 0;
