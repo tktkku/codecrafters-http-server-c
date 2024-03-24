@@ -214,7 +214,7 @@ int main(int argc, char* argv[]) {
 				}
 				token = strtok(NULL, "\n");
 			}
-
+			printf("paser finished\n");
 			if (header.request.type == GET)
 			{
 				if (strcmp(header.request.path, "/") == 0)
