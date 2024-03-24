@@ -206,8 +206,11 @@ int main(int argc, char* argv[]) {
 				else if (strcmp(token, "\r") == 0)
 				{
 					token = strtok(NULL, "\n");
-					header.body = (char*)malloc(header.content_len);
-					memcpy(header.body, token, header.content_len);
+					if (header.content_len > 0 && strlen(token) > 0)
+					{
+						header.body = (char*)malloc(header.content_len);
+						memcpy(header.body, token, header.content_len);
+					}
 				}
 				token = strtok(NULL, "\n");
 			}
