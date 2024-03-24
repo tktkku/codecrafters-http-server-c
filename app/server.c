@@ -312,15 +312,13 @@ int main(int argc, char* argv[]) {
 			free(header.host.url);
 			free(header.host.port);
 			free(header.user_agent.agent);
-
-			close(client_fd);
-
-			exit(0);
 		}		
 		else if (pid == -1)
 		{
 			printf("fork() error: %s\n", strerror(errno));
 		}
+		close(client_fd);
+		exit(0);
 	}
 	close(server_fd);
 	return 0;
