@@ -217,7 +217,7 @@ int main(int argc, char* argv[]) {
 				{
 					printf("parse body start\n");
 					token = strtok(NULL, "\n");
-					if (header.content_len > 0 && strlen(token) > 0)
+					if (token != NULL && header.content_len > 0 && strlen(token) > 0)
 					{
 						header.body = (char*)malloc(header.content_len);
 						memcpy(header.body, token, header.content_len);
