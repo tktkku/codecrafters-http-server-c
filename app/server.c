@@ -36,8 +36,7 @@ typedef struct
 	} user_agent;
 } request_header;
 
-
-int main() {
+int main(int argc, char* argv[]) {
 	// Disable output buffering
 	setbuf(stdout, NULL);
 
@@ -232,18 +231,35 @@ int main() {
 					}
 					free(reponse);
 				}
-				else if (strncmp(header.request.path, "/files", 5) == 0)
+				else if (
+					strncmp(header.request.path, "/files", 5) == 0 
+					&&
+					argc == 3 && strncmp(argv[1], "--directory", 11) == 0 && strlen(argv[2]) >= 1
+					)
 				{
+					char* root_path = argv[2];
+					printf("File root path=%s\n", root_path);
 					char* file = header.request.path + 1;
 					file = strchr(file, '/');
-					if (file == NULL)
+					printf("file=%s\n", file);
+					if (file == NULL || strcmp(file, "/") == 0)
 					{
-						printf("Error file path\n");
-						goto SEND_404;
+						printf("Empty file name\n");
+						if (send(client_fd, REQUEST_404, strlen(REQUEST_404), 0) == -1)
+						{
+							printf(MSG_SEND_FAILED, strerror(errno));
+						}
 					}
 					else
 					{
-						FILE *f = fopen(file, "rb");
+						char *file_path = NULL;
+						if (root_path != NULL)
+						{
+							file_path = (char*)malloc(strlen(root_path) + strlen(file) + 1);
+							sprintf(file_path, "%s%s", root_path, file);
+						}
+
+						FILE *f = fopen(file_path, "rb");
 						if (f != NULL)
 						{
 							fseek(f, 0L, SEEK_END);
@@ -269,16 +285,18 @@ int main() {
 						}
 						else
 						{
-							printf("Open file:%s error\n", file);
-							goto SEND_404;
+							printf("Open file:%s error %s\n", file_path, strerror(errno));
+							if (send(client_fd, REQUEST_404, strlen(REQUEST_404), 0) == -1)
+							{
+								printf(MSG_SEND_FAILED, strerror(errno));
+							}
 						}
-						
+						free(file_path);
 					}
 				}
 				else
 				{
 					printf("could not find path: %s \n", header.request.path);
-					SEND_404:
 					if (send(client_fd, REQUEST_404, strlen(REQUEST_404), 0) == -1)
 					{
 						printf(MSG_SEND_FAILED, strerror(errno));
