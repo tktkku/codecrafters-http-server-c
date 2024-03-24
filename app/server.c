@@ -211,7 +211,7 @@ int main(int argc, char* argv[]) {
 					strncpy(tmp, p1 + 1, p2 - p1 - 1);
 					header.content_len = atoi(tmp);
 					free(tmp);
-					printf("parse Content-Length start\n");
+					printf("parse Content-Length end\n");
 				}
 				else if (strcmp(token, "\r") == 0)
 				{
@@ -378,7 +378,7 @@ int main(int argc, char* argv[]) {
 						if (f != NULL)
 						{
 							printf("Writing file start\n");
-							fwrite(header.body, header.content_len - 1, 1, f);
+							fwrite(header.body, header.content_len, 1, f);
 
 							char *reponse = "HTTP/1.1 201 Created\r\n\r\n";
 							if (send(client_fd, reponse, strlen(reponse), 0) == -1)
