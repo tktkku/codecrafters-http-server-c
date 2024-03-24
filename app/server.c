@@ -112,6 +112,7 @@ int main(int argc, char* argv[]) {
 				printf("token=%s\n", token);
 				if (strncmp(token, "GET", 3) == 0)
 				{
+					printf("parse GET start\n");
 					int t_len = strlen(token);
 					char* t_copy = (char*)malloc(t_len + 1);
 					strcpy(t_copy, token);
@@ -131,9 +132,11 @@ int main(int argc, char* argv[]) {
 					strncpy(header.request.version, p2 + 1, p3 - p2 - 1);
 
 					free(t_copy);
+					printf("parse GET end\n");
 				}
 				else if (strncmp(token, "POST", 4) == 0)
 				{
+					printf("parse POST start\n");
 					int t_len = strlen(token);
 					char* t_copy = (char*)malloc(t_len + 1);
 					strcpy(t_copy, token);
@@ -153,9 +156,11 @@ int main(int argc, char* argv[]) {
 					strncpy(header.request.version, p2 + 1, p3 - p2 - 1);
 
 					free(t_copy);
+					printf("parse POST end\n");
 				}
 				else if (strncmp(token, "Host:", 5) == 0)
 				{
+					printf("parse Host start\n");
 					int t_len = strlen(token);
 					char* t_copy = (char*)malloc(t_len + 1);
 					strcpy(t_copy, token);
@@ -173,9 +178,11 @@ int main(int argc, char* argv[]) {
 					strncpy(header.host.port, p2 + 1, p3 - p2 - 1);
 
 					free(t_copy);
+					printf("parse Host end\n");
 				}
 				else if (strncmp(token, "User-Agent:", 11) == 0)
 				{
+					printf("parse User-Agent start\n");
 					int t_len = strlen(token);
 					char* t_copy = (char*)malloc(t_len + 1);
 					strcpy(t_copy, token);
@@ -188,9 +195,11 @@ int main(int argc, char* argv[]) {
 					strncpy(header.user_agent.agent, p1 + 1, p2 - p1 - 1);
 					
 					free(t_copy);
+					printf("parse User-Agent end\n");
 				}
 				else if (strncmp(token, "Content-Length:", 15) == 0)
 				{
+					printf("parse Content-Length start\n");
 					int t_len = strlen(token);
 					char* t_copy = (char*)malloc(t_len + 1);
 					strcpy(t_copy, token);
@@ -202,19 +211,22 @@ int main(int argc, char* argv[]) {
 					strncpy(tmp, p1 + 1, p2 - p1 - 1);
 					header.content_len = atoi(tmp);
 					free(tmp);
+					printf("parse Content-Length start\n");
 				}
 				else if (strcmp(token, "\r") == 0)
 				{
+					printf("parse body start\n");
 					token = strtok(NULL, "\n");
 					if (header.content_len > 0 && strlen(token) > 0)
 					{
 						header.body = (char*)malloc(header.content_len);
 						memcpy(header.body, token, header.content_len);
 					}
+					printf("parse body end\n");
 				}
 				token = strtok(NULL, "\n");
 			}
-			printf("paser finished\n");
+			printf("parse finished\n");
 			if (header.request.type == GET)
 			{
 				if (strcmp(header.request.path, "/") == 0)
