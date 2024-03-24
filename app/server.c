@@ -318,6 +318,7 @@ int main(int argc, char* argv[]) {
 							}
 							free(reponse);
 							free(file_buffer);
+							fclose(f);
 						}
 						else
 						{
@@ -327,8 +328,10 @@ int main(int argc, char* argv[]) {
 								printf(MSG_SEND_FAILED, strerror(errno));
 							}
 						}
-						fclose(f);
-						free(file_path);
+						if (file_path)
+						{
+							free(file_path);
+						}
 					}
 				}
 				else
@@ -384,6 +387,7 @@ int main(int argc, char* argv[]) {
 							}
 							
 							printf("Writing file end\n");
+							fclose(f);
 						}
 						else
 						{
@@ -393,8 +397,10 @@ int main(int argc, char* argv[]) {
 								printf(MSG_SEND_FAILED, strerror(errno));
 							}
 						}
-						fclose(f);
-						free(file_path);
+						if (file_path)
+						{
+							free(file_path);
+						}
 					}
 				}
 				else
