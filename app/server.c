@@ -34,6 +34,8 @@ typedef struct
 	{
 		char* agent;
 	} user_agent;
+	int content_len;
+	char* body;
 } request_header;
 
 int main(int argc, char* argv[]) {
@@ -187,6 +189,26 @@ int main(int argc, char* argv[]) {
 					
 					free(t_copy);
 				}
+				else if (strncmp(token, "Content-Length:", 15) == 0)
+				{
+					int t_len = strlen(token);
+					char* t_copy = (char*)malloc(t_len + 1);
+					strcpy(t_copy, token);
+
+					char* p1 = strchr(t_copy, ' ');
+					char* p2 = strchr(p1 + 1, '\r');
+					char *tmp = (char*)malloc(p2 - p1);
+					memset(tmp, 0, p2 - p1);
+					strncpy(tmp, p1 + 1, p2 - p1 - 1);
+					header.content_len = atoi(tmp);
+					free(tmp);
+				}
+				else if (strcmp(token, "\r") == 0)
+				{
+					token = strtok(NULL, "\n");
+					header.body = (char*)malloc(header.content_len);
+					memcpy(header.body, token, header.content_len);
+				}
 				token = strtok(NULL, "\n");
 			}
 
@@ -267,7 +289,6 @@ int main(int argc, char* argv[]) {
 							fseek(f, 0L, SEEK_SET);
 							unsigned char *file_buffer = (unsigned char*)malloc(file_size);
 							fread(file_buffer, file_size, 1, f); 
-							fclose(f);
 
 							int off = 0;
 							char *reponse = (char*)malloc(128 + file_size);
@@ -291,6 +312,7 @@ int main(int argc, char* argv[]) {
 								printf(MSG_SEND_FAILED, strerror(errno));
 							}
 						}
+						fclose(f);
 						free(file_path);
 					}
 				}
@@ -306,14 +328,96 @@ int main(int argc, char* argv[]) {
 			}
 			else if (header.request.type == POST)
 			{
+				if (
+					strncmp(header.request.path, "/files", 5) == 0 
+					&&
+					argc == 3 && strncmp(argv[1], "--directory", 11) == 0 && strlen(argv[2]) >= 1
+					)
+				{
+					char* root_path = argv[2];
+					printf("File root path=%s\n", root_path);
+					char* file = header.request.path + 1;
+					file = strchr(file, '/');
+					printf("file=%s\n", file);
+					if (file == NULL || strcmp(file, "/") == 0)
+					{
+						printf("Empty file name\n");
+						if (send(client_fd, REQUEST_404, strlen(REQUEST_404), 0) == -1)
+						{
+							printf(MSG_SEND_FAILED, strerror(errno));
+						}
+					}
+					else
+					{
+						char *file_path = NULL;
+						if (root_path != NULL)
+						{
+							file_path = (char*)malloc(strlen(root_path) + strlen(file) + 1);
+							sprintf(file_path, "%s%s", root_path, file);
+						}
 
+						FILE *f = fopen(file_path, "wb+");
+						if (f != NULL)
+						{
+							printf("Writing file start\n");
+							fwrite(header.body, header.content_len - 1, 1, f);
+
+							char *reponse = "HTTP/1.1 201 Created\r\n\r\n";
+							if (send(client_fd, reponse, strlen(reponse), 0) == -1)
+							{
+								printf(MSG_SEND_FAILED, strerror(errno));
+							}
+							
+							printf("Writing file end\n");
+						}
+						else
+						{
+							printf("Open file:%s error %s\n", file_path, strerror(errno));
+							if (send(client_fd, REQUEST_404, strlen(REQUEST_404), 0) == -1)
+							{
+								printf(MSG_SEND_FAILED, strerror(errno));
+							}
+						}
+						fclose(f);
+						free(file_path);
+					}
+				}
+				else
+				{
+					printf("could not find path: %s \n", header.request.path);
+					printf("client fd = %d\n", client_fd);
+					if (send(client_fd, REQUEST_404, strlen(REQUEST_404), 0) == -1)
+					{
+						printf(MSG_SEND_FAILED, strerror(errno));
+					}
+				}
 			}
 			printf("Free buffer\n");
-			free(header.request.path);
-			free(header.request.version);
-			free(header.host.url);
-			free(header.host.port);
-			free(header.user_agent.agent);
+			if (header.request.path)
+			{
+				free(header.request.path);
+			}
+			if (header.request.version)
+			{
+				free(header.request.version);
+			}
+			if (header.host.url)
+			{
+				free(header.host.url);
+			}
+			if (header.host.port)
+			{
+				free(header.host.port);
+			}
+			if (header.user_agent.agent)
+			{
+				free(header.user_agent.agent);
+			}
+			if (header.body)
+			{
+				free(header.body);
+			}
+			
 			printf("Close client %d\n", client_fd);
 
 			shutdown(client_fd, SHUT_RDWR);
